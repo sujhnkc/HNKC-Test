@@ -1,0 +1,175 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled1.ipynb",
+      "provenance": [],
+      "authorship_tag": "ABX9TyNZNnoW0iVH4DsOTx/85JLM",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/sujhnkc/HNKC-Test/blob/master/NN_Scratch_Keras\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "qllIybdQuns_",
+        "outputId": "e524e3f2-bf7c-49bc-e6ce-f7403c7f713b",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 204
+        }
+      },
+      "source": [
+        "import numpy as np\n",
+        "\n",
+        "def sigmoid(x):\n",
+        "    return 1.0/(1+ np.exp(-x))\n",
+        "\n",
+        "def sigmoid_derivative(x):\n",
+        "    return x * (1.0 - x)\n",
+        "\n",
+        "class NeuralNetwork:\n",
+        "    def __init__(self, x, y):\n",
+        "        self.input      = x\n",
+        "        self.weights1   = np.random.rand(self.input.shape[1],4) \n",
+        "        self.weights2   = np.random.rand(4,1)                 \n",
+        "        self.y          = y\n",
+        "        self.output     = np.zeros(self.y.shape)\n",
+        "\n",
+        "    def feedforward(self):\n",
+        "        self.layer1 = sigmoid(np.dot(self.input, self.weights1))\n",
+        "        self.output = sigmoid(np.dot(self.layer1, self.weights2))\n",
+        "\n",
+        "    def backprop(self):\n",
+        "        # application of the chain rule to find derivative of the loss function with respect to weights2 and weights1\n",
+        "        d_weights2 = np.dot(self.layer1.T, (2*(self.y - self.output) * sigmoid_derivative(self.output)))\n",
+        "        d_weights1 = np.dot(self.input.T,  (np.dot(2*(self.y - self.output) * sigmoid_derivative(self.output), self.weights2.T) * sigmoid_derivative(self.layer1)))\n",
+        "\n",
+        "        # update the weights with the derivative (slope) of the loss function\n",
+        "        self.weights1 += d_weights1\n",
+        "        self.weights2 += d_weights2\n",
+        "    \n",
+        "\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    X = np.array([[0,0,1],\n",
+        "                  [0,1,1],\n",
+        "                  [1,0,1],\n",
+        "                  [1,1,1]])\n",
+        "    y = np.array([[0],[1],[1],[0]])\n",
+        "    nn = NeuralNetwork(X,y)\n",
+        "\n",
+        "    for i in range(50000):\n",
+        "        nn.feedforward()\n",
+        "        nn.backprop()\n",
+        "\n",
+        "    print(nn.output)\n",
+        "    print(nn.weights1)\n",
+        "    print(nn.weights2)"
+      ],
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "[[0.00105023]\n",
+            " [0.99577108]\n",
+            " [0.99576663]\n",
+            " [0.00525286]]\n",
+            "[[ 8.12146134 -4.66509301  2.97681825  5.18248609]\n",
+            " [-4.79355616  8.09015664  2.93231086  5.15453869]\n",
+            " [ 1.19597554  1.08702547  1.87489458 -0.31624919]]\n",
+            "[[-11.38777403]\n",
+            " [-11.38803787]\n",
+            " [  6.98869591]\n",
+            " [ 10.30092807]]\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "18YuGotYzwWZ",
+        "outputId": "ec6490a9-4590-47ef-f00e-6c714ac064f1",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 323
+        }
+      },
+      "source": [
+        "from keras.models import Sequential\n",
+        "from keras.layers import Dense\n",
+        "from keras import optimizers\n",
+        "import numpy as np\n",
+        "np.random.seed(9)\n",
+        "\n",
+        "model = Sequential()\n",
+        "\n",
+        "# Layer 1\n",
+        "model.add(Dense(units=4, activation='sigmoid', input_dim=3))\n",
+        "# Output Layer\n",
+        "model.add(Dense(units=1, activation='sigmoid'))\n",
+        "\n",
+        "print(model.summary())\n",
+        "print('')\n",
+        "\n",
+        "sgd = optimizers.SGD(lr=1)\n",
+        "model.compile(loss='mean_squared_error', optimizer=sgd)\n",
+        "\n",
+        "X = np.array([[0,0,1],\n",
+        "              [0,1,1],\n",
+        "              [1,0,1],\n",
+        "              [1,1,1]])\n",
+        "y = np.array([[0],[1],[1],[0]])\n",
+        "\n",
+        "model.fit(X, y, epochs=1500, verbose=False)\n",
+        "\n",
+        "print(model.predict(X))"
+      ],
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Model: \"sequential\"\n",
+            "_________________________________________________________________\n",
+            "Layer (type)                 Output Shape              Param #   \n",
+            "=================================================================\n",
+            "dense (Dense)                (None, 4)                 16        \n",
+            "_________________________________________________________________\n",
+            "dense_1 (Dense)              (None, 1)                 5         \n",
+            "=================================================================\n",
+            "Total params: 21\n",
+            "Trainable params: 21\n",
+            "Non-trainable params: 0\n",
+            "_________________________________________________________________\n",
+            "None\n",
+            "\n",
+            "[[0.0809733 ]\n",
+            " [0.92960495]\n",
+            " [0.9280983 ]\n",
+            " [0.06905529]]\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    }
+  ]
+}
